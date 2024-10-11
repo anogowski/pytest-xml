@@ -1,0 +1,15 @@
+#############################################
+#	Dual License: BSD-3-Clause AND MPL-2.0	#
+#	Copyright (c) 2024, Adam Nogowski		#
+#############################################
+
+site_name: pytest-xml
+site_description: Create simple XML results for parsing
+site_author: Adam Nogowski
+
+theme: readthedocs
+
+repo_url: https://github.com/anogowski/pytest-xml
+
+pages:
+- Home: index.md
