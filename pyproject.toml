@@ -38,3 +38,12 @@ dependencies = ["pytest>=8.0.0"]
 Repository = "https://github.com/anogowski/pytest-xml"
 [project.entry-points.pytest11]
 xml = "pytest_xml.plugin"
+
+[tool.codespell]
+builtin = "clear,usage,en-GB_to_en-US"
+write-changes = true
+count = true
+
+[tool.pytest.ini_options]
+log_file = "log.log"
+log_file_level = "DEBUG"

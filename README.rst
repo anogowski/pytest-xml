@@ -54,7 +54,7 @@ the coverage at least stays the same before you submit a pull request.
 License
 -------
 Dual License
-Distributed under the terms of the `Mozilla Public License 2.0`_ AND `BSD-3-Clause`_ licenses, "pytest-xml" is free and open source software
+Distributed under the terms of the `Mozilla Public License 2.0` AND `BSD-3-Clause` licenses, "pytest-xml" is free and open source software
 
 
 Issues
