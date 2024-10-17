@@ -1,6 +1,9 @@
 name: Publish Python 🐍 distribution 📦 to PyPI and TestPyPI
 
-on: push
+on:
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   build:
@@ -9,17 +12,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@main
+      with:
+        fetch-depth: 0
     - name: Set up Python
       uses: actions/setup-python@main
       with:
         python-version: "3.x"
-
-    - name: Install pypa/build
+    - name: Install requirements
       run: >-
-        python3 -m
+        python -m
         pip install
-        build
-        --user
+        -r requirements.txt
     - name: Build a binary wheel and a source tarball
       run: python3 -m build
     - name: Store the distribution packages
@@ -27,29 +30,56 @@ jobs:
       with:
         name: python-package-distributions
         path: dist/
-  
-  publish-to-pypi:
-    name: >-
-      Publish Python 🐍 distribution 📦 to PyPI
-    if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
+
+  publish-to-testpypi:
+    name: Publish Python 🐍 distribution 📦 to TestPyPI
     needs:
     - build
     runs-on: ubuntu-latest
+
     environment:
-      name: pypi
-      url: https://pypi.org/p/pytest-xml  # Replace <package-name> with your PyPI project name
+      name: testpypi
+      url: https://test.pypi.org/p/pytest-mark-count
+
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
 
     steps:
-      - name: Download all the dists
-        uses: actions/download-artifact@main
-        with:
-          name: python-package-distributions
-          path: dist/
-      - name: Publish distribution 📦 to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-  
+    - name: Download all the dists
+      uses: actions/download-artifact@main
+      with:
+        name: python-package-distributions
+        path: dist/
+    - name: Publish distribution 📦 to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+        verbose: true
+
+  publish-to-pypi:
+    name: >-
+      Publish Python 🐍 distribution 📦 to PyPI
+    needs:
+    - build
+    - publish-to-testpypi
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/pytest-mark-count  # Replace <package-name> with your PyPI project name
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@main
+      with:
+        name: python-package-distributions
+        path: dist/
+    - name: Publish distribution 📦 to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        verbose: true
+
   github-release:
     name: >-
       Sign the Python 🐍 distribution 📦 with Sigstore
@@ -92,27 +122,3 @@ jobs:
         gh release upload
         '${{ github.ref_name }}' dist/**
         --repo '${{ github.repository }}'
-
-  publish-to-testpypi:
-    name: Publish Python 🐍 distribution 📦 to TestPyPI
-    needs:
-    - build
-    runs-on: ubuntu-latest
-
-    environment:
-      name: testpypi
-      url: https://test.pypi.org/p/pytest-xml
-
-    permissions:
-      id-token: write  # IMPORTANT: mandatory for trusted publishing
-
-    steps:
-    - name: Download all the dists
-      uses: actions/download-artifact@main
-      with:
-        name: python-package-distributions
-        path: dist/
-    - name: Publish distribution 📦 to TestPyPI
-      uses: pypa/gh-action-pypi-publish@v1.8.14
-      with:
-        repository-url: https://test.pypi.org/legacy/
