@@ -5,11 +5,21 @@
 		"editor.formatOnSaveMode": "file"
 	},
 	"cSpell.words": [
+		"addini",
+		"addoption",
 		"fixturenames",
+		"getgroup",
+		"getini",
+		"getplugin",
+		"linelist",
 		"metafunc",
 		"nodeid",
 		"Nogowski",
-		"pytest"
+		"pluginmanager",
+		"pytest",
+		"unconfigure",
+		"xfailed",
+		"xpassed"
 	],
 	"editor.bracketPairColorization.enabled": true, //Cycle through colors for different brackets
 	"editor.detectIndentation": false, //False: Manually set tab size
@@ -31,8 +41,30 @@
 	"files.trimFinalNewlines": true, //Remove extra white space and end of file on save
 	"git.autofetch": "all", //Commits will automatically be fetched from ALL remotes of the current Git repository.
 	"html.format.wrapLineLength": 300,
+	"python.analysis.autoFormatStrings": true,
 	"python.analysis.autoImportCompletions": true,
+	"python.analysis.autoIndent": true,
+	"python.analysis.autoSearchPaths": true,
+	"python.analysis.completeFunctionParens": true,
+	"python.analysis.diagnosticMode": "workspace",
+	"python.analysis.enablePytestSupport": true,
+	"python.analysis.exclude": [
+		".venv/**"
+	],
+	"python.analysis.ignore": [
+		".venv/**"
+	],
+	"python.analysis.indexing": true,
+	"python.analysis.inlayHints.callArgumentNames": "all",
+	"python.analysis.inlayHints.functionReturnTypes": true,
+	"python.analysis.inlayHints.pytestParameters": true,
+	"python.analysis.inlayHints.variableTypes": true,
 	"python.analysis.typeCheckingMode": "basic",
+	"python.testing.pytestArgs": [
+		"tests"
+	],
+	"python.testing.pytestEnabled": true,
+	"python.testing.unittestEnabled": false,
 	"search.followSymlinks": false, //False: Do NOT show symlinks multiple times in search results
 	"workbench.colorCustomizations": {
 		"editorUnnecessaryCode.border": "#dd7aab", //Underline unused code
@@ -46,16 +78,5 @@
 	"yapf.args": [
 		"--style",
 		"{BASED_ON_STYLE: Google, COLUMN_LIMIT: 300, INDENT_WIDTH: 4, USE_TABS: true}"
-	],
-	"python.analysis.exclude": [
-		".venv/**"
-	],
-	"python.analysis.ignore": [
-		".venv/**"
-	],
-	"python.testing.pytestArgs": [
-		"tests"
-	],
-	"python.testing.unittestEnabled": false,
-	"python.testing.pytestEnabled": true
+	]
 }
