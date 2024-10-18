@@ -10,11 +10,11 @@ pytest-xml
     :target: https://pypi.org/project/pytest-xml
     :alt: Python versions
 
-.. image:: https://github.com/anogowski/pytest-xml/actions/workflows/main.yml/badge.svg
-    :target: https://github.com/anogowski/pytest-xml/actions/workflows/main.yml
+.. image:: https://github.com/anogowski/pytest-xml/actions/workflows/publish-to-test-pypi.yml/badge.svg
+    :target: https://github.com/anogowski/pytest-xml/actions/workflows/publish-to-test-pypi.yml
     :alt: See Build Status on GitHub Actions
 
-Create simple XML results for parsing
+Create simple but detailed XML results for parsing
 
 ----
 
@@ -30,7 +30,7 @@ Features
 Requirements
 ------------
 
-* TODO
+* See `requirements.txt`
 
 
 Installation
@@ -53,8 +53,11 @@ the coverage at least stays the same before you submit a pull request.
 
 License
 -------
-Dual License
-Distributed under the terms of the `Mozilla Public License 2.0` AND `BSD-3-Clause` licenses, "pytest-xml" is free and open source software
+Dual License:
+
+Distributed under the terms of both the `BSD-3`_ AND `Mozilla Public License 2.0`_ licenses.
+
+"pytest-xml" is free and open source software
 
 
 Issues
@@ -67,6 +70,7 @@ If you encounter any problems, please `file an issue`_ along with a detailed des
 .. _`MIT`: https://opensource.org/licenses/MIT
 .. _`BSD-3`: https://opensource.org/licenses/BSD-3-Clause
 .. _`GNU GPL v3.0`: https://www.gnu.org/licenses/gpl-3.0.txt
+.. _`Mozilla Public License 2.0`: https://opensource.org/license/mpl-2-0
 .. _`Apache Software License 2.0`: https://www.apache.org/licenses/LICENSE-2.0
 .. _`cookiecutter-pytest-plugin`: https://github.com/pytest-dev/cookiecutter-pytest-plugin
 .. _`file an issue`: https://github.com/anogowski/pytest-xml/issues
