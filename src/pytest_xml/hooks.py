@@ -3,6 +3,10 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
+def pytest_xml_report_title(report):
+	"""Called before adding the title to the report"""
+
+
 def pytest_xml_results_summary(summary, session):
 	"""Called before adding the summary section to the report"""
 

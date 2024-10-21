@@ -5,33 +5,36 @@
 # Python Includes
 import datetime
 import json
+from dict2xml import dict2xml
 import math
 import os
 import re
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 import warnings
 from pathlib import Path
 from collections import defaultdict
 from typing import Any
 
 # Pytest Includes
+from jinja2 import Template
 import pytest
 from pytest import Item
 from pytest_metadata.plugin import metadata_key
 
-from _pytest.config import Config, Notset
+from _pytest.config import Config, Notset, create_terminal_writer
 from _pytest.config.argparsing import Parser
-
+from _pytest.terminal import TerminalReporter
+# Plugin Includes
+from pytest_xml.version import __version__
 from pytest_xml.report_data import Report_Data
-
-if TYPE_CHECKING:
-	from .report_data import Report_Data
 
 
 class XML_Report:
+	ENVIRONMENT_METADATA: Final[list[str]] = ['environment', 'Packages', 'Platform', 'Plugins', 'Python']
+	ENVIRONMENT_STR: Final[str] = 'environment'
 
-	def __init__(self, report_path: Path, config: Config, report_data: Report_Data) -> None:
+	def __init__(self, report_path: Path, config: Config, report_data: Report_Data, template: Template) -> None:
 		self._report_path: Path = (Path.cwd() / Path(os.path.expandvars(path=report_path)).expanduser())
 		self._report_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -40,7 +43,10 @@ class XML_Report:
 
 		self._reports = defaultdict(dict)
 		self._report: Report_Data = report_data
+		self._report.title = self._report_path.name
 		self._suite_start_time: float = time.time()
+
+		self._template: Template = template
 
 	def _asset_filename(self, test_id, extra_index, test_index, file_extension) -> str:
 		return "{}_{}_{}.{}".format(
@@ -50,31 +56,30 @@ class XML_Report:
 		    file_extension,
 		)[-self._max_asset_filename_length:]
 
-	def _generate_report(self, self_contained=False):
-		generated = datetime.datetime.now()
-		test_data = self._report.data
-		test_data = json.dumps(test_data)
+	def _generate_report(self):
+		generated: datetime.datetime = datetime.datetime.now()
+		# test_data: str = json.dumps(self._report.data)
+		metadata_dict: dict[Any, Any] = self._config.stash[metadata_key]
+		env_metadata: dict = {i: metadata_dict[i] for i in metadata_dict if i in self.ENVIRONMENT_METADATA}
+		non_env_metadata: dict = {i: metadata_dict[i] for i in metadata_dict if i not in self.ENVIRONMENT_METADATA}
 		rendered_report = self._template.render(
 		    title=self._report.title,
-		    date=generated.strftime("%d-%b-%Y"),
-		    time=generated.strftime("%H:%M:%S"),
-		    version=__version__,
-		    styles=self.css,
-		    run_count=self._run_count(),
+		    report_date=generated.strftime("%d-%b-%Y"),
+		    report_time=generated.strftime("%H:%M:%S"),
+		    pytest_xml_version=__version__,
+		    environment=dict2xml(data=env_metadata),
+		    metadata=dict2xml(data=non_env_metadata),
+		    total_tests=self._run_count(),
 		    running_state=self._report.running_state,
-		    self_contained=self_contained,
-		    outcomes=self._report.outcomes,
-		    test_data=test_data,
-		    table_head=self._report.table_header,
-		    additional_summary=self._report.additional_summary,
+		    outcomes=dict2xml(data=self._report.outcomes),
+		    test_data=dict2xml(data=self._report.data["tests"]),
+		    additional_summary=dict2xml(data=self._report.additional_summary),
 		)
 
 		self._write_report(rendered_report)
 
-	def _generate_environment(self):
-		from pytest_metadata.plugin import metadata_key
-
-		metadata = self._config.stash[metadata_key]
+	def _generate_environment(self) -> dict[Any, Any]:
+		metadata: dict[Any, Any] = self._config.stash[metadata_key]
 
 		for key in metadata.keys():
 			value = metadata[key]
@@ -84,8 +89,8 @@ class XML_Report:
 
 		return metadata
 
-	def _is_redactable_environment_variable(self, environment_variable):
-		redactable_regexes = self._config.getini("environment_table_redact_list")
+	def _is_redactable_environment_variable(self, environment_variable) -> bool:
+		redactable_regexes: list[str] | str = self._config.getini(name="environment_table_redact_list")  #type: ignore
 		for redactable_regex in redactable_regexes:
 			if re.match(redactable_regex, environment_variable):
 				return True
@@ -115,11 +120,7 @@ class XML_Report:
 	def pytest_sessionstart(self, session):
 		self._report.set_data("environment", self._generate_environment())
 
-		session.config.hook.pytest_html_report_title(report=self._report)
-
-		headers = self._report.table_header
-		session.config.hook.pytest_html_results_table_header(cells=headers)
-		self._report.table_header = _fix_py(headers)
+		session.config.hook.pytest_xml_report_title(report=self._report)
 
 		self._report.running_state = "started"
 		if self._config.getini("generate_report_on_test"):
@@ -127,28 +128,28 @@ class XML_Report:
 
 	@pytest.hookimpl(trylast=True)
 	def pytest_sessionfinish(self, session):
-		session.config.hook.pytest_html_results_summary(
+		session.config.hook.pytest_xml_results_summary(
 		    prefix=self._report.additional_summary["prefix"],
 		    summary=self._report.additional_summary["summary"],
 		    postfix=self._report.additional_summary["postfix"],
 		    session=session,
 		)
 		self._report.running_state = "finished"
-		suite_stop_time = time.time()
+		suite_stop_time: float = time.time()
 		self._report.total_duration = suite_stop_time - self._suite_start_time
 		self._generate_report()
 
 	@pytest.hookimpl(trylast=True)
-	def pytest_terminal_summary(self, terminalreporter):
+	def pytest_terminal_summary(self, terminalreporter: TerminalReporter) -> None:
 		terminalreporter.write_sep(
-		    "-",
-		    f"Generated html report: {self._report_path.as_uri()}",
+		    sep="-",
+		    title=f"Generated xml report: {self._report_path.as_uri()}",
 		)
 
 	@pytest.hookimpl(trylast=True)
-	def pytest_collectreport(self, report):
+	def pytest_collectreport(self, report) -> None:
 		if report.failed:
-			self._process_report(report, 0, [])
+			self._process_report(report=report, duration=0, processed_extras=[])
 
 	@pytest.hookimpl(trylast=True)
 	def pytest_collection_finish(self, session):
@@ -156,18 +157,11 @@ class XML_Report:
 
 	@pytest.hookimpl(trylast=True)
 	def pytest_runtest_logreport(self, report):
-		if hasattr(report, "duration_formatter"):
-			warnings.warn(
-			    "'duration_formatter' has been removed and no longer has any effect!"
-			    "Please use the 'pytest_html_duration_format' hook instead.",
-			    DeprecationWarning,
-			)
-
 		# "reruns" makes this code a mess.
 		# We store each combination of when and outcome
 		# exactly once, unless that outcome is a "rerun"
 		# then we store all of them.
-		key = (report.when, report.outcome)
+		key: tuple[Any, Any] = (report.when, report.outcome)
 		if report.outcome == "rerun":
 			if key not in self._reports[report.nodeid]:
 				self._reports[report.nodeid][key] = list()
@@ -195,7 +189,7 @@ class XML_Report:
 				test_id = report.nodeid
 				if when != "call":
 					test_id += f"::{when}"
-				processed_extras += self._process_extras(each, test_id)
+				# processed_extras += self._process_extras(each, test_id)
 
 		for key, reports in self._reports[report.nodeid].items():
 			when, _ = key
@@ -210,37 +204,11 @@ class XML_Report:
 		outcome = _process_outcome(report)
 		try:
 			# hook returns as list for some reason
-			formatted_duration = self._config.hook.pytest_html_duration_format(duration=duration)[0]
+			formatted_duration = self._config.hook.pytest_xml_duration_format(duration=duration)[0]
 		except IndexError:
 			formatted_duration = _format_duration(duration)
 
-		test_id = report.nodeid
-		if report.when != "call":
-			test_id += f"::{report.when}"
-
-		data = {
-		    "extras": processed_extras,
-		}
-
-		links = [extra for extra in data["extras"] if extra["format_type"] in ["json", "text", "url"]]
-		cells = [
-		    f'<td class="col-result">{outcome}</td>',
-		    f'<td class="col-testId">{test_id}</td>',
-		    f'<td class="col-duration">{formatted_duration}</td>',
-		    f'<td class="col-links">{_process_links(links)}</td>',
-		]
-		self._config.hook.pytest_html_results_table_row(report=report, cells=cells)
-		if not cells:
-			return
-
-		cells = _fix_py(cells)
-		self._hydrate_data(data, cells)
-		data["resultsTableRow"] = cells
-
-		processed_logs = _process_logs(report)
-		self._config.hook.pytest_html_results_table_html(report=report, data=processed_logs)
-
-		self._report.add_test(data, report, outcome, processed_logs)
+		self._report.add_test(report=report, outcome=outcome)
 
 
 def _format_duration(duration):

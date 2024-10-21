@@ -5,18 +5,26 @@
 		"editor.formatOnSaveMode": "file"
 	},
 	"cSpell.words": [
+		"addhooks",
 		"addini",
 		"addoption",
+		"collectreport",
 		"fixturenames",
 		"getgroup",
 		"getini",
 		"getplugin",
+		"hookspecs",
 		"linelist",
+		"logreport",
 		"metafunc",
 		"nodeid",
 		"Nogowski",
 		"pluginmanager",
 		"pytest",
+		"redactable",
+		"searchpath",
+		"terminalreporter",
+		"trylast",
 		"unconfigure",
 		"xfailed",
 		"xpassed"
@@ -41,6 +49,7 @@
 	"files.trimFinalNewlines": true, //Remove extra white space and end of file on save
 	"git.autofetch": "all", //Commits will automatically be fetched from ALL remotes of the current Git repository.
 	"html.format.wrapLineLength": 300,
+	"xml.format.maxLineWidth": 300,
 	"python.analysis.autoFormatStrings": true,
 	"python.analysis.autoImportCompletions": true,
 	"python.analysis.autoIndent": true,
@@ -61,7 +70,8 @@
 	"python.analysis.inlayHints.variableTypes": true,
 	"python.analysis.typeCheckingMode": "basic",
 	"python.testing.pytestArgs": [
-		"tests"
+		"tests",
+		"suites"
 	],
 	"python.testing.pytestEnabled": true,
 	"python.testing.unittestEnabled": false,

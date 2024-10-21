@@ -20,12 +20,17 @@ from _pytest.config.argparsing import Parser
 class Report_Data:
 
 	def __init__(self, config: Config) -> None:
+		self._config: Config = config
 
 		self._total_duration: float = 0
 		self._collected_items: int = 0
 		self._running_state: str = "not_started"
 
-		self._config: Config = config
+		self._additional_summary: dict[str, list[Any]] = {
+		    "prefix": [],
+		    "summary": [],
+		    "postfix": [],
+		}
 
 		self._sections: list[str] = ["metadata", "summary", "results"]
 
@@ -66,6 +71,10 @@ class Report_Data:
 		}
 
 	@property
+	def config(self) -> Config:
+		return self._config
+
+	@property
 	def total_duration(self) -> float:
 		return self._total_duration
 
@@ -82,6 +91,22 @@ class Report_Data:
 		self._collected_items = count
 
 	@property
+	def running_state(self) -> str:
+		return self._running_state
+
+	@running_state.setter
+	def running_state(self, state) -> None:
+		self._running_state = state
+
+	@property
+	def additional_summary(self) -> dict[str, list[Any]]:
+		return self._additional_summary
+
+	@additional_summary.setter
+	def additional_summary(self, value) -> None:
+		self._additional_summary = value
+
+	@property
 	def sections(self) -> list[str]:
 		return self._sections
 
@@ -90,8 +115,16 @@ class Report_Data:
 		self._sections = sections
 
 	@property
-	def config(self) -> Config:
-		return self._config
+	def data(self) -> dict[str, Any]:
+		return self._data
+
+	@property
+	def title(self):
+		return self._data["title"]
+
+	@title.setter
+	def title(self, title):
+		self._data["title"] = title
 
 	@property
 	def outcomes(self) -> dict[str, dict[str, Any]]:
@@ -105,7 +138,7 @@ class Report_Data:
 		self._data[key] = value
 
 	def add_test(self, report, outcome):
-		# passed "setup" and "teardown" are not added to the html
+		# passed "setup" and "teardown" are not added to the xml
 		if report.when in ["call", "collect"]:
 			self.outcomes = outcome
-			self._data["tests"][report.nodeid].append(outcome)
+			self._data["tests"][report.nodeid.replace("::", "-")].append(outcome)
