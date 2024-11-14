@@ -39,7 +39,7 @@ jobs:
 
     environment:
       name: testpypi
-      url: https://test.pypi.org/p/pytest-mark-count
+      url: https://pypi.org/p/pytest-xml  # Replace <package-name> with your PyPI project name
 
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
@@ -65,7 +65,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/pytest-mark-count  # Replace <package-name> with your PyPI project name
+      url: https://pypi.org/p/pytest-xml  # Replace <package-name> with your PyPI project name
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
 
