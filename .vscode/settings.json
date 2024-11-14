@@ -8,27 +8,40 @@
 		"addhooks",
 		"addini",
 		"addoption",
+		"argparsing",
 		"collectreport",
 		"fixturenames",
 		"getgroup",
 		"getini",
 		"getplugin",
 		"hookspecs",
+		"hookwrapper",
 		"linelist",
 		"logreport",
+		"makereport",
 		"metafunc",
 		"nodeid",
+		"nodeids",
 		"Nogowski",
+		"pluggy",
 		"pluginmanager",
 		"pytest",
 		"redactable",
+		"regexes",
 		"searchpath",
+		"sessionfinish",
+		"sessionstart",
 		"terminalreporter",
+		"tryfirst",
 		"trylast",
 		"unconfigure",
+		"wasxfail",
+		"workerinput",
+		"xdist",
 		"xfailed",
 		"xpassed"
 	],
+	"debugpy.debugJustMyCode": false,
 	"editor.bracketPairColorization.enabled": true, //Cycle through colors for different brackets
 	"editor.detectIndentation": false, //False: Manually set tab size
 	"editor.find.autoFindInSelection": "multiline", //Search Selected text when multiple lines are selected
@@ -49,7 +62,6 @@
 	"files.trimFinalNewlines": true, //Remove extra white space and end of file on save
 	"git.autofetch": "all", //Commits will automatically be fetched from ALL remotes of the current Git repository.
 	"html.format.wrapLineLength": 300,
-	"xml.format.maxLineWidth": 300,
 	"python.analysis.autoFormatStrings": true,
 	"python.analysis.autoImportCompletions": true,
 	"python.analysis.autoIndent": true,
@@ -70,7 +82,6 @@
 	"python.analysis.inlayHints.variableTypes": true,
 	"python.analysis.typeCheckingMode": "basic",
 	"python.testing.pytestArgs": [
-		"tests",
 		"suites"
 	],
 	"python.testing.pytestEnabled": true,
@@ -85,8 +96,10 @@
 	"workbench.layoutControl.type": "toggles",
 	"workbench.startupEditor": "none",
 	"workbench.tree.indent": 25, //Indent folder hierarchy
+	"xml.format.maxLineWidth": 300,
 	"yapf.args": [
 		"--style",
 		"{BASED_ON_STYLE: Google, COLUMN_LIMIT: 300, INDENT_WIDTH: 4, USE_TABS: true}"
-	]
+	],
+	"editor.defaultFormatter": "eeyore.yapf"
 }

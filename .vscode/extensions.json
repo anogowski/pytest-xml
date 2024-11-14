@@ -6,6 +6,8 @@
 		"ms-python.isort",
 		"ms-python.python",
 		"ms-python.vscode-pylance",
+		"redhat.vscode-xml",
+		"redhat.vscode-yaml",
 		"streetsidesoftware.code-spell-checker",
 		"tamasfe.even-better-toml",
 		"VisualStudioExptTeam.intellicode-api-usage-examples",

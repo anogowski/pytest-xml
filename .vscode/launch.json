@@ -1,0 +1,63 @@
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			// PyTest
+			// F5 to debug
+			// ctrl + F5 to run
+			"name": "PyTest Debug: Current File",
+			"type": "debugpy",
+			"request": "launch",
+			"module": "pytest",
+			"args": [
+				"${file}"
+			],
+			"console": "integratedTerminal",
+			"justMyCode": false,
+			"logToFile": true
+		},
+		{
+			// PyTest
+			// F5 to debug
+			// ctrl + F5 to run
+			"name": "PyTest Debug: Collect Only",
+			"type": "debugpy",
+			"request": "launch",
+			"module": "pytest",
+			"args": [
+				"--collect-only"
+			],
+			"console": "integratedTerminal",
+			"justMyCode": false,
+			"logToFile": true
+		},
+		{
+			// Python only no PyTest
+			// F5 to debug
+			// ctrl + F5 to run
+			"name": "Python Debug: Current File",
+			"type": "debugpy",
+			"request": "launch",
+			"program": "${file}",
+			"console": "integratedTerminal",
+			"justMyCode": false,
+			"logToFile": true
+		},
+		{
+			// Testing (Flask) Native Extension
+			"name": "Testing Debugger",
+			"type": "debugpy",
+			"request": "launch",
+			"purpose": [
+				"debug-test"
+			],
+			"args": [],
+			"console": "integratedTerminal",
+			"justMyCode": false,
+			"logToFile": true
+		},
+	]
+}

@@ -10,10 +10,9 @@ from collections import defaultdict
 # Pytest Includes
 import pytest
 from pytest import Item
-from pytest_metadata.plugin import metadata_key
 
-from _pytest.config import Config, Notset
-from _pytest.config.argparsing import Parser
+from _pytest.config import Config
+from pytest_item_dict.plugin import ItemDictPlugin, ITEM_DICT_PLUGIN_NAME
 
 
 @dataclass
@@ -23,8 +22,10 @@ class Report_Data:
 		self._config: Config = config
 
 		self._total_duration: float = 0
-		self._collected_items: int = 0
+		self._num_collected_items: int = 0
+		self._collected_items: list[Item] = []
 		self._running_state: str = "not_started"
+		self.items_dict_plugin: ItemDictPlugin = self.config.pluginmanager.get_plugin(name=ITEM_DICT_PLUGIN_NAME)
 
 		self._additional_summary: dict[str, list[Any]] = {
 		    "prefix": [],
@@ -39,7 +40,7 @@ class Report_Data:
 		    "tests": defaultdict(list),
 		}
 
-		self._outcomes: dict[str, dict[str, Any]] = {
+		self._outcomes: dict[str, dict[str, str | int]] = {
 		    "failed": {
 		        "label": "Failed",
 		        "value": 0
@@ -68,7 +69,30 @@ class Report_Data:
 		        "label": "Reruns",
 		        "value": 0
 		    },
+		    "unexecuted": {
+		        "label": "Unexecuted",
+		        "value": 0
+		    }
 		}
+
+	@property
+	def get_kwargs(self) -> dict[str, int]:
+		replace_dict: dict[str, str] = {
+		    "Failed": "total_fail",
+		    "Passed": "total_pass",
+		    "Skipped": "total_skip",
+		    "Expected failures": "total_ex_fail",
+		    "Unexpected passes": "total_unpass",
+		    "Errors": "total_errors",
+		    "Reruns": "total_reruns",
+		    "Unexecuted": "total_unexecuted",
+		}
+		report_kwargs: dict[str, int] = {}
+		for key, value in self._outcomes.items():
+			label: str = str(self._outcomes[key]["label"])
+			num_outcomes: int = int(self._outcomes[key]['value'])
+			report_kwargs[replace_dict[label]] = num_outcomes
+		return report_kwargs
 
 	@property
 	def config(self) -> Config:
@@ -83,12 +107,38 @@ class Report_Data:
 		self._total_duration = duration
 
 	@property
-	def collected_items(self) -> int:
+	def num_collected_items(self) -> int:
+		return self._num_collected_items
+
+	@num_collected_items.setter
+	def num_collected_items(self, count: int) -> None:
+		self._num_collected_items = count
+
+	@property
+	def collected_items(self) -> list[Item]:
 		return self._collected_items
 
 	@collected_items.setter
-	def collected_items(self, count: int) -> None:
-		self._collected_items = count
+	def collected_items(self, items: list[Item]) -> None:
+		self._collected_items = items
+
+	@property
+	def collected_nodeids(self) -> list[str]:
+		return [item.nodeid for item in self._collected_items]
+
+	@property
+	def collection_hierarchy(self) -> dict[str, Any]:
+		self.items_dict_plugin = self.config.pluginmanager.get_plugin(name=ITEM_DICT_PLUGIN_NAME)
+		if self.items_dict_plugin is not None:
+			return self.items_dict_plugin.collect_dict.hierarchy
+		return {}
+
+	@property
+	def test_hierarchy(self) -> dict[str, Any]:
+		self.items_dict_plugin = self.config.pluginmanager.get_plugin(name=ITEM_DICT_PLUGIN_NAME)
+		if self.items_dict_plugin is not None:
+			return self.items_dict_plugin.test_dict.hierarchy
+		return {}
 
 	@property
 	def running_state(self) -> str:
@@ -139,6 +189,9 @@ class Report_Data:
 
 	def add_test(self, report, outcome):
 		# passed "setup" and "teardown" are not added to the xml
-		if report.when in ["call", "collect"]:
+		if report.when == "collect":
+			self._data["tests"][report.nodeid.replace("::", "-")].append(outcome)
+
+		elif report.when == "call":
 			self.outcomes = outcome
 			self._data["tests"][report.nodeid.replace("::", "-")].append(outcome)

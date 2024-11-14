@@ -5,39 +5,42 @@
 # Python Includes
 import datetime
 import json
-from dict2xml import dict2xml
 import math
 import os
 import re
 import time
-from typing import TYPE_CHECKING, Final
-import warnings
+from typing import Final
 from pathlib import Path
 from collections import defaultdict
 from typing import Any
 
-# Pytest Includes
+# Pip Includes
 from jinja2 import Template
+from data_to_xml.xml_converter import XMLConverter
+
+# Pytest Includes
 import pytest
-from pytest import Item
+from pytest import CollectReport, Item, Session, TestReport
 from pytest_metadata.plugin import metadata_key
 
-from _pytest.config import Config, Notset, create_terminal_writer
+from _pytest.config import Config, Notset
 from _pytest.config.argparsing import Parser
 from _pytest.terminal import TerminalReporter
+
+from pytest_item_dict.plugin import ItemDictPlugin
+
 # Plugin Includes
 from pytest_xml.version import __version__
 from pytest_xml.report_data import Report_Data
 
 
 class XML_Report:
-	ENVIRONMENT_METADATA: Final[list[str]] = ['environment', 'Packages', 'Platform', 'Plugins', 'Python']
+	ENVIRONMENT_METADATA: Final[list[str]] = ['environment', 'JAVA_HOME', 'Packages', 'Platform', 'Plugins', 'Python']
 	ENVIRONMENT_STR: Final[str] = 'environment'
 
-	def __init__(self, report_path: Path, config: Config, report_data: Report_Data, template: Template) -> None:
+	def __init__(self, report_path: str, config: Config, report_data: Report_Data, template: Template) -> None:
 		self._report_path: Path = (Path.cwd() / Path(os.path.expandvars(path=report_path)).expanduser())
 		self._report_path.parent.mkdir(parents=True, exist_ok=True)
-
 		self._config: Config = config
 		self._max_asset_filename_length: int = int(str(config.getini(name="max_asset_filename_length")))
 
@@ -48,33 +51,54 @@ class XML_Report:
 
 		self._template: Template = template
 
-	def _asset_filename(self, test_id, extra_index, test_index, file_extension) -> str:
-		return "{}_{}_{}.{}".format(
-		    re.sub(r"[^\w.]", "_", test_id),
-		    str(extra_index),
-		    str(test_index),
-		    file_extension,
-		)[-self._max_asset_filename_length:]
+	def _to_xml(self, data: dict, root_node: str | None = None) -> str:
+		"""Converts the data dictionary into xml and returns it.
+
+		Args:
+			data (dict): dictionary to convert to xml
+
+		Returns:
+			str: xml of data dictionary
+		"""
+		return XMLConverter(my_dict=data, root_node=root_node).formatted_xml if len(data.keys()) > 0 else ""
 
 	def _generate_report(self):
+		"""Formats the report 
+		"""
 		generated: datetime.datetime = datetime.datetime.now()
+		num_collected_items, current_test_count, duration = self._run_count()
 		# test_data: str = json.dumps(self._report.data)
 		metadata_dict: dict[Any, Any] = self._config.stash[metadata_key]
 		env_metadata: dict = {i: metadata_dict[i] for i in metadata_dict if i in self.ENVIRONMENT_METADATA}
 		non_env_metadata: dict = {i: metadata_dict[i] for i in metadata_dict if i not in self.ENVIRONMENT_METADATA}
-		rendered_report = self._template.render(
+		rendered_report: str = self._template.render(
+		    self._report.get_kwargs,
+		    # self._report.additional_summary,
 		    title=self._report.title,
 		    report_date=generated.strftime("%d-%b-%Y"),
 		    report_time=generated.strftime("%H:%M:%S"),
 		    pytest_xml_version=__version__,
-		    environment=dict2xml(data=env_metadata),
-		    metadata=dict2xml(data=non_env_metadata),
-		    total_tests=self._run_count(),
+		    environment=self._to_xml(data=env_metadata, root_node="report-environment"),
+		    metadata=self._to_xml(data=non_env_metadata, root_node="report-metadata"),
+		    additional_summary=self._to_xml(data=self._report.additional_summary, root_node="report-summary"),
 		    running_state=self._report.running_state,
-		    outcomes=dict2xml(data=self._report.outcomes),
-		    test_data=dict2xml(data=self._report.data["tests"]),
-		    additional_summary=dict2xml(data=self._report.additional_summary),
+		    tests_to_run=num_collected_items,
+		    tests_ran=current_test_count,
+		    total_duration=duration,
+		    collected_tests=self._to_xml(data=self._report.collection_hierarchy, root_node="report-collected-tests"),
+		    hierarchy=self._to_xml(data=self._report.test_hierarchy, root_node="report-test-status"),
 		)
+
+		output_file: str = Path(f"{__file__}/../../../output/reports/collect.xml").as_posix()
+
+		with open(output_file, "w+") as f:
+			xml_doc: list[str] = [
+			    r'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + '\n',
+			    r'<collect-report>',
+			    self._to_xml(data=self._report.collection_hierarchy),
+			    r'</collect-report>',
+			]
+			f.writelines(xml_doc)
 
 		self._write_report(rendered_report)
 
@@ -97,24 +121,32 @@ class XML_Report:
 
 		return False
 
-	def _write_report(self, rendered_report):
+	def _write_report(self, rendered_report: str) -> None:
+		"""Writes the report
+
+		Args:
+			rendered_report (str): xml to be written
+		"""
 		with self._report_path.open("w", encoding="utf-8") as f:
 			f.write(rendered_report)
 
-	def _run_count(self):
-		relevant_outcomes = ["passed", "failed", "xpassed", "xfailed"]
-		counts = 0
+	def _run_count(self) -> tuple[int, int, str]:
+		"""- total number of tests to run
+		- current number of tests ran
+		- current duration of tests ran
+
+		Returns:
+			tuple[int, int, str]: collected_items, current_test_count, duration
+		"""
+		relevant_outcomes: list[str] = ["passed", "failed", "xpassed", "xfailed"]
+		current_test_count: int = 0
 		for outcome in self._report.outcomes.keys():
 			if outcome in relevant_outcomes:
-				counts += self._report.outcomes[outcome]["value"]
+				current_test_count += self._report.outcomes[outcome]["value"]
 
-		plural = counts > 1
-		duration = _format_duration(self._report.total_duration)
+		duration: str = _format_duration(duration=self._report.total_duration)
 
-		if self._report.running_state == "finished":
-			return f"{counts} {'tests' if plural else 'test'} took {duration}."
-
-		return f"{counts}/{self._report.collected_items} {'tests' if plural else 'test'} done."
+		return self._report.num_collected_items, current_test_count, duration
 
 	@pytest.hookimpl(trylast=True)
 	def pytest_sessionstart(self, session):
@@ -141,22 +173,28 @@ class XML_Report:
 
 	@pytest.hookimpl(trylast=True)
 	def pytest_terminal_summary(self, terminalreporter: TerminalReporter) -> None:
+		"""Print the location of the report at the end of testing
+
+		Args:
+			terminalreporter (TerminalReporter): Object used to write terminal output
+		"""
 		terminalreporter.write_sep(
 		    sep="-",
 		    title=f"Generated xml report: {self._report_path.as_uri()}",
 		)
 
 	@pytest.hookimpl(trylast=True)
-	def pytest_collectreport(self, report) -> None:
+	def pytest_collectreport(self, report: CollectReport) -> None:
 		if report.failed:
 			self._process_report(report=report, duration=0, processed_extras=[])
 
 	@pytest.hookimpl(trylast=True)
-	def pytest_collection_finish(self, session):
-		self._report.collected_items = len(session.items)
+	def pytest_collection_finish(self, session: Session):
+		self._report.collected_items = session.items
+		self._report.num_collected_items = len(session.items)
 
 	@pytest.hookimpl(trylast=True)
-	def pytest_runtest_logreport(self, report):
+	def pytest_runtest_logreport(self, report: TestReport):
 		# "reruns" makes this code a mess.
 		# We store each combination of when and outcome
 		# exactly once, unless that outcome is a "rerun"
@@ -224,11 +262,11 @@ def _format_duration(duration):
 	return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 
-def _is_error(report):
+def _is_error(report: TestReport) -> bool:
 	return (report.when in ["setup", "teardown", "collect"] and report.outcome == "failed")
 
 
-def _process_outcome(report):
+def _process_outcome(report) -> str:
 	if _is_error(report):
 		return "Error"
 	if hasattr(report, "wasxfail"):

@@ -20,8 +20,8 @@ from _pytest.config.argparsing import Parser
 from _pytest.reports import TestReport
 
 # Plugin Includes
-from .report_data import Report_Data
-from .xml_report import XML_Report
+from pytest_xml.report_data import Report_Data
+from pytest_xml.xml_report import XML_Report
 from pytest_xml.util import _read_template
 
 
@@ -33,7 +33,7 @@ def pytest_addhooks(pluginmanager: PluginManager):
 
 def pytest_addoption(parser: Parser):
 	group: pytest.OptionGroup = parser.getgroup(name='xml')
-	group.addoption('--xml', action='store', dest='xml_path', metavar=Path, default=None, help='create xml report file at given path.')
+	group.addoption('--xml', action='store', dest='xml_path', metavar=str, default=None, help='create xml report file at given path.')
 
 	parser.addini(
 	    name="max_asset_filename_length",
@@ -61,12 +61,10 @@ def pytest_addoption(parser: Parser):
 
 def pytest_configure(config: Config) -> None:
 	resources_path: Path = Path(__file__).parent
-	xml_path: str | Path | Notset = config.getoption(name="xml_path")
+	xml_path: str | Notset = config.getoption(name="xml_path")
 
-	inst_path: bool = isinstance(xml_path, Path)
-	inst_str: bool = isinstance(xml_path, str)
 	# prevent opening xml_path on worker nodes (xdist)
-	if inst_path or inst_str and not hasattr(config, "workerinput"):
+	if isinstance(xml_path, str) and not hasattr(config, "workerinput"):
 		report_data: Report_Data = Report_Data(config=config)
 		template: Template = _read_template(search_paths=[resources_path])
 		xml: XML_Report = XML_Report(report_path=xml_path, config=config, report_data=report_data, template=template)

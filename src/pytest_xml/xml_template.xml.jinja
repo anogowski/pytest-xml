@@ -4,40 +4,8 @@
 	<report-date>{{ report_date }}</report-date>
 	<report-time>{{ report_time }}</report-time>
 	<pytest-xml-link>https://pypi.org/project/pytest-xml/</pytest-xml-link>
-	<pytest-xml-version>{{ pytest_xml_version }}</pytest-xml-version>
-	<report-environment>
-		{{ environment }}
-	</report-environment>
-
-	<report-metadata>
-		{{ metadata }}
-	</report-metadata>
-	<report-summary>
-		<summary-prefix>{% for item in prefix %}<prefix name="{{ item.name }}">{{ item }}</prefix>{% endfor %}</summary-prefix>
-		<summary-summary>{% for item in summary %}<summary name="{{ item.name }}">{{ item }}</summary>{% endfor %}</summary-summary>
-		<summary-postfix>{% for item in postfix %}<postfix
-				name="{{ item.name }}">{{ item }}</postfix>{% endfor %}</summary-postfix> {{ additional_summary }} </report-summary>
-	<report-results total-tests="{{ total_tests }}" running-state="{{ running_state }}" passed="0" failed="0" skipped="0" expected-fail="0" unexpected-pass="0" errors="0" reruns="0">
-		<results-suites passed="0" failed="0" skipped="0" expected-fail="0" unexpected-pass="0" errors="0" reruns="0">
-			<suites-folder passed="0" failed="0" skipped="0" expected-fail="0" unexpected-pass="0" errors="0" reruns="0">
-				<folder-module passed="0" failed="0" skipped="0" expected-fail="0" unexpected-pass="0" errors="0" reruns="0">
-					<module-class tests="0" passed="0" failed="0" skipped="0" expected-fail="0" unexpected-pass="0" errors="0" reruns="0">
-						<class-test name="" outcome="" />
-					</module-class>
-				</folder-module>
-			</suites-folder>
-		</results-suites>
-	</report-results>
-
-
-	<report-outcomes>
-		{{ outcomes }}
-	</report-outcomes>
-
-
-	<report-test-data>
-		{{ test_data }}
-	</report-test-data>
-
-
-</xml-report>
+	<pytest-xml-version>{{ pytest_xml_version }}</pytest-xml-version> {{ environment }} {{
+	metadata }} {{ additional_summary }} <report-results running-state="{{ running_state }}" total_duration="{{ total_duration }}" tests-to-run="{{ tests_to_run }}" tests_ran="{{ tests_ran }}"
+		tests_unexecuted="{{ total_unexecuted }}" passed="{{ total_pass }}" failed="{{ total_fail }}" skipped="{{ total_skip }}" expected-fail="{{ total_ex_fail }}" unexpected-pass="{{ total_unpass }}" errors="{{ total_errors }}" reruns="{{ total_reruns }}">
+		{{ hierarchy }}
+	</report-results> {{ collected_tests }} </xml-report>
